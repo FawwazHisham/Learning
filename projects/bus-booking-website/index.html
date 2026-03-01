@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BusGo - Book Bus Tickets Online</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="container nav-inner">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">&#x1F68C;</span> BusGo
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html" class="active">Home</a></li>
+        <li><a href="my-bookings.html">My Bookings</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="hero-overlay">
+      <div class="container hero-content">
+        <h1>Travel Smarter, Book Faster</h1>
+        <p>Find and book bus tickets across hundreds of routes</p>
+
+        <!-- SEARCH FORM -->
+        <form class="search-card" id="searchForm">
+          <div class="search-row">
+            <div class="field-group">
+              <label for="from">From</label>
+              <select id="from" name="from" required>
+                <option value="">Select City</option>
+                <option>Kuala Lumpur</option>
+                <option>Penang</option>
+                <option>Johor Bahru</option>
+                <option>Ipoh</option>
+                <option>Kota Bharu</option>
+                <option>Kuching</option>
+                <option>Kota Kinabalu</option>
+                <option>Melaka</option>
+                <option>Alor Setar</option>
+                <option>Kuantan</option>
+              </select>
+            </div>
+
+            <button type="button" class="swap-btn" id="swapBtn" title="Swap cities">&#8646;</button>
+
+            <div class="field-group">
+              <label for="to">To</label>
+              <select id="to" name="to" required>
+                <option value="">Select City</option>
+                <option>Kuala Lumpur</option>
+                <option>Penang</option>
+                <option>Johor Bahru</option>
+                <option>Ipoh</option>
+                <option>Kota Bharu</option>
+                <option>Kuching</option>
+                <option>Kota Kinabalu</option>
+                <option>Melaka</option>
+                <option>Alor Setar</option>
+                <option>Kuantan</option>
+              </select>
+            </div>
+
+            <div class="field-group">
+              <label for="travelDate">Date</label>
+              <input type="date" id="travelDate" name="travelDate" required />
+            </div>
+
+            <div class="field-group">
+              <label for="passengers">Passengers</label>
+              <select id="passengers" name="passengers">
+                <option value="1">1 Passenger</option>
+                <option value="2">2 Passengers</option>
+                <option value="3">3 Passengers</option>
+                <option value="4">4 Passengers</option>
+                <option value="5">5 Passengers</option>
+              </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary search-submit">Search Buses</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </header>
+
+  <!-- FEATURES SECTION -->
+  <section class="features section">
+    <div class="container">
+      <h2 class="section-title">Why Choose BusGo?</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">&#128722;</div>
+          <h3>Easy Booking</h3>
+          <p>Book your tickets in under 2 minutes with our simple and intuitive interface.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#128664;</div>
+          <h3>100+ Routes</h3>
+          <p>Connect to over 100 destinations across the country with daily departures.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#127807;</div>
+          <h3>Comfortable Seats</h3>
+          <p>Choose your preferred seat type — economy, business, or sleeper class.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#128274;</div>
+          <h3>Secure Payments</h3>
+          <p>Your payments are protected with industry-standard encryption.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- POPULAR ROUTES -->
+  <section class="popular section bg-light">
+    <div class="container">
+      <h2 class="section-title">Popular Routes</h2>
+      <div class="routes-grid" id="popularRoutes"></div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <span class="logo-icon">&#x1F68C;</span> BusGo
+        <p>Your trusted bus booking platform.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Quick Links</h4>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="my-bookings.html">My Bookings</a></li>
+        </ul>
+      </div>
+      <div class="footer-contact">
+        <h4>Contact</h4>
+        <p>support@busgo.com</p>
+        <p>+60 3-1234 5678</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 BusGo. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="js/app.js"></script>
+  <script>
+    // Set minimum date to today
+    document.getElementById('travelDate').min = new Date().toISOString().split('T')[0];
+
+    // Swap cities
+    document.getElementById('swapBtn').addEventListener('click', () => {
+      const from = document.getElementById('from');
+      const to = document.getElementById('to');
+      const tmp = from.value;
+      from.value = to.value;
+      to.value = tmp;
+    });
+
+    // Search form submit
+    document.getElementById('searchForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const from = document.getElementById('from').value;
+      const to = document.getElementById('to').value;
+      if (from === to) {
+        alert('Origin and destination cannot be the same city.');
+        return;
+      }
+      const date = document.getElementById('travelDate').value;
+      const passengers = document.getElementById('passengers').value;
+      window.location.href = `buses.html?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&date=${date}&passengers=${passengers}`;
+    });
+
+    // Render popular routes
+    const routes = [
+      { from: 'Kuala Lumpur', to: 'Penang', price: 35, duration: '4h 30m' },
+      { from: 'Kuala Lumpur', to: 'Johor Bahru', price: 28, duration: '3h 45m' },
+      { from: 'Kuala Lumpur', to: 'Ipoh', price: 22, duration: '2h 30m' },
+      { from: 'Penang', to: 'Johor Bahru', price: 55, duration: '6h 00m' },
+      { from: 'Kuala Lumpur', to: 'Melaka', price: 18, duration: '2h 00m' },
+      { from: 'Kuala Lumpur', to: 'Kuantan', price: 30, duration: '3h 00m' },
+    ];
+    const container = document.getElementById('popularRoutes');
+    routes.forEach(r => {
+      container.innerHTML += `
+        <div class="route-card" onclick="quickSearch('${r.from}','${r.to}')">
+          <div class="route-cities">
+            <span>${r.from}</span>
+            <span class="route-arrow">&#8594;</span>
+            <span>${r.to}</span>
+          </div>
+          <div class="route-meta">
+            <span class="route-duration">&#128336; ${r.duration}</span>
+            <span class="route-price">From RM ${r.price}</span>
+          </div>
+        </div>`;
+    });
+
+    function quickSearch(from, to) {
+      document.getElementById('from').value = from;
+      document.getElementById('to').value = to;
+      document.getElementById('travelDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('searchForm').dispatchEvent(new Event('submit'));
+    }
+  </script>
+</body>
+</html>

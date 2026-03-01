@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Booking Confirmed - BusGo</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="container nav-inner">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">&#x1F68C;</span> BusGo
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="my-bookings.html">My Bookings</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- PROGRESS BAR -->
+  <div class="progress-strip">
+    <div class="container">
+      <div class="progress-steps">
+        <div class="step completed"><span class="step-num">1</span> Search</div>
+        <div class="step-line completed"></div>
+        <div class="step completed"><span class="step-num">2</span> Select Seats</div>
+        <div class="step-line completed"></div>
+        <div class="step completed"><span class="step-num">3</span> Passenger Details</div>
+        <div class="step-line completed"></div>
+        <div class="step active"><span class="step-num">4</span> Confirmation</div>
+      </div>
+    </div>
+  </div>
+
+  <main class="container section">
+
+    <!-- SUCCESS BANNER -->
+    <div class="success-banner">
+      <div class="success-icon">&#10003;</div>
+      <div>
+        <h2>Booking Confirmed!</h2>
+        <p>Your e-ticket has been sent to your email.</p>
+      </div>
+    </div>
+
+    <div class="confirmation-layout">
+
+      <!-- TICKET -->
+      <div class="ticket-card" id="ticketCard">
+        <div class="ticket-header">
+          <div class="ticket-logo">
+            <span class="logo-icon">&#x1F68C;</span> BusGo
+          </div>
+          <div class="ticket-ref" id="ticketRef"></div>
+        </div>
+
+        <div class="ticket-body">
+          <div class="ticket-route" id="ticketRoute"></div>
+
+          <div class="ticket-divider">
+            <div class="ticket-hole left"></div>
+            <div class="dashed-line"></div>
+            <div class="ticket-hole right"></div>
+          </div>
+
+          <div class="ticket-details" id="ticketDetails"></div>
+        </div>
+
+        <div class="ticket-footer">
+          <div class="ticket-status confirmed">&#10003; CONFIRMED</div>
+          <button class="btn btn-outline" onclick="printTicket()">&#128438; Print / Save</button>
+        </div>
+      </div>
+
+      <!-- ACTIONS SIDEBAR -->
+      <div class="confirmation-sidebar">
+        <div class="card">
+          <h4>What's next?</h4>
+          <ul class="info-list">
+            <li>&#9993; E-ticket sent to your email</li>
+            <li>&#128241; Show ticket on your phone at boarding</li>
+            <li>&#128336; Arrive 15 minutes before departure</li>
+            <li>&#128220; Carry a valid photo ID</li>
+          </ul>
+        </div>
+
+        <div class="card cancellation-card">
+          <h4>&#128204; Cancellation Policy</h4>
+          <p>Free cancellation up to 24 hours before departure. After that, a 50% cancellation fee applies.</p>
+        </div>
+
+        <a href="index.html" class="btn btn-primary btn-block">Book Another Trip</a>
+        <a href="my-bookings.html" class="btn btn-outline btn-block" style="margin-top:10px;">View My Bookings</a>
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-bottom">
+      <p>&copy; 2026 BusGo. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="js/app.js"></script>
+  <script>
+    const booking = JSON.parse(sessionStorage.getItem('lastBooking') || 'null');
+    if (!booking) { window.location.href = 'index.html'; }
+
+    const { bus, search, selectedSeats, passengerData, email, phone, total, ref, bookedAt } = booking;
+    const { from, to, date, passengers } = search;
+
+    document.getElementById('ticketRef').textContent = `Ref: ${ref}`;
+
+    document.getElementById('ticketRoute').innerHTML = `
+      <div class="ticket-time-block">
+        <div class="big-time">${bus.departure}</div>
+        <div class="ticket-city">${from}</div>
+      </div>
+      <div class="ticket-arrow">
+        <div class="arrow-line"></div>
+        <div class="arrow-duration">${bus.duration}</div>
+      </div>
+      <div class="ticket-time-block">
+        <div class="big-time">${bus.arrival}</div>
+        <div class="ticket-city">${to}</div>
+      </div>
+    `;
+
+    document.getElementById('ticketDetails').innerHTML = `
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">Date</div>
+          <div class="detail-value">${formatDate(date)}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Bus Operator</div>
+          <div class="detail-value">${bus.operator}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Bus Type</div>
+          <div class="detail-value">${bus.type}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Seats</div>
+          <div class="detail-value">${selectedSeats.sort((a,b)=>a-b).join(', ')}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Passengers</div>
+          <div class="detail-value">${passengerData.map(p => p.name).join(', ')}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Contact</div>
+          <div class="detail-value">${email}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Phone</div>
+          <div class="detail-value">${phone}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Total Paid</div>
+          <div class="detail-value price">RM ${parseFloat(total).toFixed(2)}</div>
+        </div>
+      </div>
+    `;
+
+    function formatDate(d) {
+      if (!d) return '';
+      const dt = new Date(d + 'T00:00:00');
+      return dt.toLocaleDateString('en-MY', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    function printTicket() {
+      window.print();
+    }
+  </script>
+</body>
+</html>

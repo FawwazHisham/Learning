@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Available Buses - BusGo</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="container nav-inner">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">&#x1F68C;</span> BusGo
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="my-bookings.html">My Bookings</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- SEARCH SUMMARY BAR -->
+  <div class="search-bar-strip">
+    <div class="container search-bar-inner">
+      <div class="search-summary" id="searchSummary"></div>
+      <a href="index.html" class="btn btn-outline btn-sm">Modify Search</a>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <main class="container buses-main section">
+    <div class="buses-layout">
+
+      <!-- FILTERS SIDEBAR -->
+      <aside class="filters-panel">
+        <h3>Filters</h3>
+
+        <div class="filter-group">
+          <label class="filter-label">Bus Type</label>
+          <label class="checkbox-label"><input type="checkbox" value="AC Sleeper" class="bus-type-filter" checked /> AC Sleeper</label>
+          <label class="checkbox-label"><input type="checkbox" value="AC Seater" class="bus-type-filter" checked /> AC Seater</label>
+          <label class="checkbox-label"><input type="checkbox" value="Non-AC Seater" class="bus-type-filter" checked /> Non-AC Seater</label>
+          <label class="checkbox-label"><input type="checkbox" value="Luxury" class="bus-type-filter" checked /> Luxury</label>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">Departure Time</label>
+          <label class="checkbox-label"><input type="checkbox" value="morning" class="time-filter" checked /> Morning (6am–12pm)</label>
+          <label class="checkbox-label"><input type="checkbox" value="afternoon" class="time-filter" checked /> Afternoon (12pm–6pm)</label>
+          <label class="checkbox-label"><input type="checkbox" value="evening" class="time-filter" checked /> Evening (6pm–12am)</label>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">Max Price: RM <span id="priceDisplay">200</span></label>
+          <input type="range" id="priceRange" min="10" max="200" value="200" step="5" />
+        </div>
+
+        <button class="btn btn-outline btn-block" id="clearFilters">Clear Filters</button>
+      </aside>
+
+      <!-- BUS RESULTS -->
+      <section class="buses-results">
+        <div class="results-header">
+          <span id="resultsCount"></span>
+          <div class="sort-row">
+            <label for="sortBy">Sort by:</label>
+            <select id="sortBy">
+              <option value="departure">Departure Time</option>
+              <option value="price-asc">Price: Low to High</option>
+              <option value="price-desc">Price: High to Low</option>
+              <option value="duration">Duration</option>
+            </select>
+          </div>
+        </div>
+        <div id="busList"></div>
+        <div id="noBuses" class="no-results hidden">
+          <div class="no-results-icon">&#128664;</div>
+          <h3>No buses found</h3>
+          <p>Try adjusting your filters or search for a different route.</p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-bottom">
+      <p>&copy; 2026 BusGo. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="js/app.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const from = params.get('from') || '';
+    const to = params.get('to') || '';
+    const date = params.get('date') || '';
+    const passengers = parseInt(params.get('passengers') || '1');
+
+    // Display search summary
+    document.getElementById('searchSummary').innerHTML =
+      `<strong>${from}</strong> &rarr; <strong>${to}</strong> &nbsp;|&nbsp; ${formatDate(date)} &nbsp;|&nbsp; ${passengers} Passenger${passengers > 1 ? 's' : ''}`;
+
+    function formatDate(d) {
+      if (!d) return '';
+      const dt = new Date(d + 'T00:00:00');
+      return dt.toLocaleDateString('en-MY', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    // Generate buses
+    const allBuses = generateBuses(from, to, date, passengers);
+    let filtered = [...allBuses];
+
+    renderBuses();
+
+    function renderBuses() {
+      applyFilters();
+      applySorting();
+      displayBuses();
+    }
+
+    function applyFilters() {
+      const selectedTypes = [...document.querySelectorAll('.bus-type-filter:checked')].map(c => c.value);
+      const selectedTimes = [...document.querySelectorAll('.time-filter:checked')].map(c => c.value);
+      const maxPrice = parseInt(document.getElementById('priceRange').value);
+
+      filtered = allBuses.filter(bus => {
+        const typeOk = selectedTypes.includes(bus.type);
+        const priceOk = bus.price * passengers <= maxPrice;
+        const hour = parseInt(bus.departure.split(':')[0]);
+        let timeSlot = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
+        const timeOk = selectedTimes.includes(timeSlot);
+        return typeOk && priceOk && timeOk;
+      });
+    }
+
+    function applySorting() {
+      const sort = document.getElementById('sortBy').value;
+      filtered.sort((a, b) => {
+        if (sort === 'price-asc') return a.price - b.price;
+        if (sort === 'price-desc') return b.price - a.price;
+        if (sort === 'duration') return a.durationMins - b.durationMins;
+        return a.departure.localeCompare(b.departure);
+      });
+    }
+
+    function displayBuses() {
+      const list = document.getElementById('busList');
+      const noBuses = document.getElementById('noBuses');
+      document.getElementById('resultsCount').textContent = `${filtered.length} bus${filtered.length !== 1 ? 'es' : ''} found`;
+
+      if (filtered.length === 0) {
+        list.innerHTML = '';
+        noBuses.classList.remove('hidden');
+        return;
+      }
+      noBuses.classList.add('hidden');
+
+      list.innerHTML = filtered.map(bus => `
+        <div class="bus-card">
+          <div class="bus-operator">
+            <div class="operator-logo">${bus.operatorInitials}</div>
+            <div>
+              <div class="operator-name">${bus.operator}</div>
+              <div class="bus-type-badge">${bus.type}</div>
+            </div>
+          </div>
+
+          <div class="bus-times">
+            <div class="time-block">
+              <div class="time">${bus.departure}</div>
+              <div class="city">${from}</div>
+            </div>
+            <div class="duration-block">
+              <div class="duration-line"></div>
+              <div class="duration-text">${bus.duration}</div>
+            </div>
+            <div class="time-block">
+              <div class="time">${bus.arrival}</div>
+              <div class="city">${to}</div>
+            </div>
+          </div>
+
+          <div class="bus-amenities">
+            ${bus.amenities.map(a => `<span class="amenity">${a}</span>`).join('')}
+          </div>
+
+          <div class="bus-booking">
+            <div class="seats-left">${bus.seatsLeft} seats left</div>
+            <div class="price-block">
+              <div class="price">RM ${(bus.price * passengers).toFixed(2)}</div>
+              <div class="price-sub">for ${passengers} pax</div>
+            </div>
+            <button class="btn btn-primary" onclick="selectBus('${bus.id}')">Select Seats</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function selectBus(busId) {
+      const bus = allBuses.find(b => b.id === busId);
+      sessionStorage.setItem('selectedBus', JSON.stringify(bus));
+      sessionStorage.setItem('searchParams', JSON.stringify({ from, to, date, passengers }));
+      window.location.href = `booking.html?busId=${busId}`;
+    }
+
+    // Filter listeners
+    document.querySelectorAll('.bus-type-filter, .time-filter').forEach(el => el.addEventListener('change', renderBuses));
+    document.getElementById('sortBy').addEventListener('change', renderBuses);
+    document.getElementById('priceRange').addEventListener('input', function () {
+      document.getElementById('priceDisplay').textContent = this.value;
+      renderBuses();
+    });
+    document.getElementById('clearFilters').addEventListener('click', () => {
+      document.querySelectorAll('.bus-type-filter, .time-filter').forEach(el => el.checked = true);
+      document.getElementById('priceRange').value = 200;
+      document.getElementById('priceDisplay').textContent = '200';
+      renderBuses();
+    });
+  </script>
+</body>
+</html>

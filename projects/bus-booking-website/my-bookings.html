@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Bookings - BusGo</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="container nav-inner">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">&#x1F68C;</span> BusGo
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="my-bookings.html" class="active">My Bookings</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container section">
+    <div class="page-header">
+      <h1>My Bookings</h1>
+      <p>View and manage all your bus ticket bookings</p>
+    </div>
+
+    <!-- FILTER TABS -->
+    <div class="booking-tabs">
+      <button class="tab-btn active" data-filter="all">All</button>
+      <button class="tab-btn" data-filter="Confirmed">Confirmed</button>
+      <button class="tab-btn" data-filter="Cancelled">Cancelled</button>
+    </div>
+
+    <div id="bookingsList"></div>
+
+    <div id="noBookings" class="no-results hidden">
+      <div class="no-results-icon">&#127920;</div>
+      <h3>No bookings yet</h3>
+      <p>Your confirmed tickets will appear here once you book a trip.</p>
+      <a href="index.html" class="btn btn-primary" style="margin-top:16px;">Search Buses</a>
+    </div>
+  </main>
+
+  <!-- CANCEL CONFIRMATION MODAL -->
+  <div class="modal-overlay" id="cancelModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Cancel Booking</h3>
+        <button class="modal-close" onclick="closeCancelModal()">&#10005;</button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to cancel booking <strong id="cancelRef"></strong>?</p>
+        <p class="cancel-warning">&#9888; Cancellation fees may apply based on our policy.</p>
+        <div class="modal-actions">
+          <button class="btn btn-outline" onclick="closeCancelModal()">Keep Booking</button>
+          <button class="btn btn-danger" id="confirmCancelBtn">Yes, Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-bottom">
+      <p>&copy; 2026 BusGo. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="js/app.js"></script>
+  <script>
+    let currentFilter = 'all';
+    let cancelTarget = null;
+
+    function loadBookings() {
+      const all = JSON.parse(localStorage.getItem('busgoBookings') || '[]');
+      const filtered = currentFilter === 'all' ? all : all.filter(b => b.status === currentFilter);
+      const list = document.getElementById('bookingsList');
+
+      if (filtered.length === 0) {
+        list.innerHTML = '';
+        document.getElementById('noBookings').classList.remove('hidden');
+        return;
+      }
+      document.getElementById('noBookings').classList.add('hidden');
+
+      list.innerHTML = filtered.slice().reverse().map(b => {
+        const { bus, search, selectedSeats, passengerData, email, total, ref, status, bookedAt } = b;
+        const { from, to, date } = search;
+        const isCancelled = status === 'Cancelled';
+        const isPast = new Date(date + 'T23:59:59') < new Date();
+
+        return `
+          <div class="my-booking-card ${isCancelled ? 'cancelled' : ''}">
+            <div class="mbc-header">
+              <div class="mbc-ref">
+                <span class="ref-label">Booking Ref</span>
+                <span class="ref-value">${ref}</span>
+              </div>
+              <div class="mbc-status ${isCancelled ? 'status-cancelled' : 'status-confirmed'}">
+                ${isCancelled ? '&#10005; Cancelled' : '&#10003; Confirmed'}
+              </div>
+            </div>
+
+            <div class="mbc-route">
+              <div class="mbc-time-block">
+                <div class="mbc-time">${bus.departure}</div>
+                <div class="mbc-city">${from}</div>
+              </div>
+              <div class="mbc-arrow">
+                <div class="duration-line"></div>
+                <div class="mbc-duration">${bus.duration}</div>
+              </div>
+              <div class="mbc-time-block">
+                <div class="mbc-time">${bus.arrival}</div>
+                <div class="mbc-city">${to}</div>
+              </div>
+            </div>
+
+            <div class="mbc-details">
+              <div class="mbc-detail"><span>Date</span><strong>${formatDate(date)}</strong></div>
+              <div class="mbc-detail"><span>Operator</span><strong>${bus.operator}</strong></div>
+              <div class="mbc-detail"><span>Seats</span><strong>${selectedSeats.sort((a,b)=>a-b).join(', ')}</strong></div>
+              <div class="mbc-detail"><span>Passengers</span><strong>${passengerData.map(p=>p.name).join(', ')}</strong></div>
+              <div class="mbc-detail"><span>Contact</span><strong>${email}</strong></div>
+              <div class="mbc-detail"><span>Total Paid</span><strong class="price-text">RM ${parseFloat(total).toFixed(2)}</strong></div>
+            </div>
+
+            <div class="mbc-actions">
+              <div class="booked-date">Booked: ${new Date(bookedAt).toLocaleDateString('en-MY', {day:'numeric',month:'short',year:'numeric'})}</div>
+              ${!isCancelled && !isPast ? `<button class="btn btn-outline btn-sm btn-danger-outline" onclick="openCancelModal('${ref}')">Cancel Booking</button>` : ''}
+              ${isPast && !isCancelled ? '<span class="past-badge">Trip Completed</span>' : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function formatDate(d) {
+      if (!d) return '';
+      const dt = new Date(d + 'T00:00:00');
+      return dt.toLocaleDateString('en-MY', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    function openCancelModal(ref) {
+      cancelTarget = ref;
+      document.getElementById('cancelRef').textContent = ref;
+      document.getElementById('cancelModal').style.display = 'flex';
+    }
+
+    function closeCancelModal() {
+      document.getElementById('cancelModal').style.display = 'none';
+      cancelTarget = null;
+    }
+
+    document.getElementById('confirmCancelBtn').addEventListener('click', () => {
+      if (!cancelTarget) return;
+      const all = JSON.parse(localStorage.getItem('busgoBookings') || '[]');
+      const idx = all.findIndex(b => b.ref === cancelTarget);
+      if (idx !== -1) {
+        all[idx].status = 'Cancelled';
+        localStorage.setItem('busgoBookings', JSON.stringify(all));
+      }
+      closeCancelModal();
+      loadBookings();
+    });
+
+    // Tab filtering
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.filter;
+        loadBookings();
+      });
+    });
+
+    loadBookings();
+  </script>
+</body>
+</html>

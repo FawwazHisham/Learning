@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Select Seats - BusGo</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="container nav-inner">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">&#x1F68C;</span> BusGo
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="my-bookings.html">My Bookings</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- PROGRESS BAR -->
+  <div class="progress-strip">
+    <div class="container">
+      <div class="progress-steps">
+        <div class="step completed"><span class="step-num">1</span> Search</div>
+        <div class="step-line completed"></div>
+        <div class="step active"><span class="step-num">2</span> Select Seats</div>
+        <div class="step-line"></div>
+        <div class="step"><span class="step-num">3</span> Passenger Details</div>
+        <div class="step-line"></div>
+        <div class="step"><span class="step-num">4</span> Confirmation</div>
+      </div>
+    </div>
+  </div>
+
+  <main class="container section">
+    <div class="booking-layout">
+
+      <!-- LEFT: SEAT SELECTION -->
+      <div class="booking-left">
+
+        <!-- BUS DETAILS CARD -->
+        <div class="card bus-detail-card" id="busDetailCard"></div>
+
+        <!-- SEAT MAP -->
+        <div class="card seat-card">
+          <h3>Select Your Seats</h3>
+          <div class="seat-legend">
+            <span class="legend-item"><span class="seat-demo available"></span> Available</span>
+            <span class="legend-item"><span class="seat-demo selected"></span> Selected</span>
+            <span class="legend-item"><span class="seat-demo booked"></span> Booked</span>
+          </div>
+
+          <div class="bus-layout">
+            <div class="driver-section">
+              <div class="steering-wheel">&#9939;</div>
+              <span>Driver</span>
+            </div>
+            <div class="seat-grid" id="seatGrid"></div>
+          </div>
+
+          <div class="selected-seats-summary" id="selectedSeatsSummary">
+            Select <span id="requiredSeats"></span> seat(s)
+          </div>
+        </div>
+
+        <!-- PASSENGER DETAILS FORM -->
+        <div class="card passenger-card" id="passengerForm" style="display:none;">
+          <h3>Passenger Details</h3>
+          <div id="passengerFields"></div>
+
+          <div class="contact-section">
+            <h4>Contact Information</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="contactEmail" placeholder="you@example.com" required />
+              </div>
+              <div class="form-group">
+                <label>Phone Number</label>
+                <input type="tel" id="contactPhone" placeholder="+60 12-345 6789" required />
+              </div>
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-block" id="proceedBtn">Proceed to Payment</button>
+        </div>
+      </div>
+
+      <!-- RIGHT: FARE SUMMARY -->
+      <aside class="booking-right">
+        <div class="card fare-card" id="fareCard">
+          <h3>Fare Summary</h3>
+          <div id="fareSummaryContent">
+            <div class="fare-placeholder">Select seats to see fare breakdown</div>
+          </div>
+        </div>
+
+        <div class="card info-card">
+          <h4>&#128274; Secure Booking</h4>
+          <ul class="info-list">
+            <li>&#10003; Free cancellation up to 24h before departure</li>
+            <li>&#10003; Instant e-ticket via email</li>
+            <li>&#10003; 24/7 customer support</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- PAYMENT MODAL -->
+  <div class="modal-overlay" id="paymentModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Payment</h3>
+        <button class="modal-close" onclick="closeModal()">&#10005;</button>
+      </div>
+      <div class="modal-body">
+        <div class="total-amount" id="modalTotal"></div>
+
+        <div class="payment-methods">
+          <label class="payment-option">
+            <input type="radio" name="payment" value="card" checked />
+            <span>&#128179; Credit / Debit Card</span>
+          </label>
+          <label class="payment-option">
+            <input type="radio" name="payment" value="fpx" />
+            <span>&#127975; Online Banking (FPX)</span>
+          </label>
+          <label class="payment-option">
+            <input type="radio" name="payment" value="ewallet" />
+            <span>&#128247; E-Wallet</span>
+          </label>
+        </div>
+
+        <div id="cardFields">
+          <div class="form-group">
+            <label>Card Number</label>
+            <input type="text" id="cardNum" placeholder="1234 5678 9012 3456" maxlength="19" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Expiry</label>
+              <input type="text" id="cardExpiry" placeholder="MM/YY" maxlength="5" />
+            </div>
+            <div class="form-group">
+              <label>CVV</label>
+              <input type="text" id="cardCvv" placeholder="123" maxlength="3" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Cardholder Name</label>
+            <input type="text" id="cardName" placeholder="Name on card" />
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-block" id="payBtn">Pay Now</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-bottom">
+      <p>&copy; 2026 BusGo. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="js/app.js"></script>
+  <script>
+    const bus = JSON.parse(sessionStorage.getItem('selectedBus') || 'null');
+    const search = JSON.parse(sessionStorage.getItem('searchParams') || '{}');
+
+    if (!bus) { window.location.href = 'index.html'; }
+
+    const { from = '', to = '', date = '', passengers = 1 } = search;
+    let selectedSeats = [];
+
+    // Render bus detail card
+    document.getElementById('busDetailCard').innerHTML = `
+      <div class="bus-detail-row">
+        <div class="bd-operator">
+          <div class="operator-logo large">${bus.operatorInitials}</div>
+          <div>
+            <div class="operator-name">${bus.operator}</div>
+            <div class="bus-type-badge">${bus.type}</div>
+          </div>
+        </div>
+        <div class="bd-route">
+          <div class="bd-time-block">
+            <div class="time">${bus.departure}</div>
+            <div class="city">${from}</div>
+            <div class="date-small">${formatDate(date)}</div>
+          </div>
+          <div class="duration-block">
+            <div class="duration-line"></div>
+            <div class="duration-text">${bus.duration}</div>
+          </div>
+          <div class="bd-time-block">
+            <div class="time">${bus.arrival}</div>
+            <div class="city">${to}</div>
+            <div class="date-small">${formatDate(date)}</div>
+          </div>
+        </div>
+        <div class="bd-price">
+          <div class="price">RM ${bus.price.toFixed(2)}</div>
+          <div class="price-sub">per person</div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('requiredSeats').textContent = passengers;
+
+    // Generate seat grid
+    const totalSeats = 40;
+    const bookedSeats = bus.bookedSeats || [];
+    const seatGrid = document.getElementById('seatGrid');
+
+    for (let i = 1; i <= totalSeats; i++) {
+      const seat = document.createElement('div');
+      const col = ((i - 1) % 4);
+      seat.className = 'seat ' + (bookedSeats.includes(i) ? 'booked' : 'available');
+      if (col === 2) seat.classList.add('aisle-gap');
+      seat.textContent = i;
+      seat.dataset.num = i;
+      if (!bookedSeats.includes(i)) {
+        seat.addEventListener('click', () => toggleSeat(i, seat));
+      }
+      seatGrid.appendChild(seat);
+    }
+
+    function toggleSeat(num, el) {
+      if (el.classList.contains('selected')) {
+        selectedSeats = selectedSeats.filter(s => s !== num);
+        el.classList.remove('selected');
+        el.classList.add('available');
+      } else {
+        if (selectedSeats.length >= passengers) {
+          alert(`You can only select ${passengers} seat(s) for this booking.`);
+          return;
+        }
+        selectedSeats.push(num);
+        el.classList.remove('available');
+        el.classList.add('selected');
+      }
+      updateUI();
+    }
+
+    function updateUI() {
+      const summary = document.getElementById('selectedSeatsSummary');
+      const passengerForm = document.getElementById('passengerForm');
+
+      if (selectedSeats.length === 0) {
+        summary.textContent = `Select ${passengers} seat(s)`;
+        passengerForm.style.display = 'none';
+        document.getElementById('fareSummaryContent').innerHTML = '<div class="fare-placeholder">Select seats to see fare breakdown</div>';
+      } else {
+        summary.innerHTML = `Selected: <strong>${selectedSeats.sort((a,b)=>a-b).join(', ')}</strong> &nbsp; (${selectedSeats.length}/${passengers} seats)`;
+
+        if (selectedSeats.length === parseInt(passengers)) {
+          passengerForm.style.display = 'block';
+          renderPassengerFields();
+          passengerForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        updateFareSummary();
+      }
+    }
+
+    function renderPassengerFields() {
+      const fields = document.getElementById('passengerFields');
+      fields.innerHTML = selectedSeats.map((seat, i) => `
+        <div class="passenger-block">
+          <h4>Passenger ${i + 1} — Seat ${seat}</h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" id="pax_name_${i}" placeholder="Full name as in IC/Passport" required />
+            </div>
+            <div class="form-group">
+              <label>IC / Passport No.</label>
+              <input type="text" id="pax_ic_${i}" placeholder="e.g. 900101-01-1234" required />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Age</label>
+              <input type="number" id="pax_age_${i}" placeholder="Age" min="1" max="120" required />
+            </div>
+            <div class="form-group">
+              <label>Gender</label>
+              <select id="pax_gender_${i}">
+                <option>Male</option>
+                <option>Female</option>
+                <option>Prefer not to say</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      `).join('<hr>');
+    }
+
+    function updateFareSummary() {
+      const baseFare = bus.price * selectedSeats.length;
+      const tax = baseFare * 0.06;
+      const total = baseFare + tax;
+
+      document.getElementById('fareSummaryContent').innerHTML = `
+        <div class="fare-row"><span>${bus.operator}</span><span></span></div>
+        <div class="fare-row"><span>${from} → ${to}</span><span></span></div>
+        <div class="fare-row"><span>Seats: ${selectedSeats.sort((a,b)=>a-b).join(', ')}</span><span></span></div>
+        <hr>
+        <div class="fare-row"><span>Base Fare (${selectedSeats.length} × RM ${bus.price})</span><span>RM ${baseFare.toFixed(2)}</span></div>
+        <div class="fare-row"><span>Service Tax (6%)</span><span>RM ${tax.toFixed(2)}</span></div>
+        <hr>
+        <div class="fare-row total"><span>Total</span><span>RM ${total.toFixed(2)}</span></div>
+      `;
+    }
+
+    // Proceed to payment
+    document.getElementById('proceedBtn').addEventListener('click', () => {
+      if (selectedSeats.length < parseInt(passengers)) {
+        alert(`Please select ${passengers} seat(s) before proceeding.`);
+        return;
+      }
+      // Collect passenger info
+      const passengerData = selectedSeats.map((seat, i) => ({
+        seat,
+        name: document.getElementById(`pax_name_${i}`).value.trim(),
+        ic: document.getElementById(`pax_ic_${i}`).value.trim(),
+        age: document.getElementById(`pax_age_${i}`).value,
+        gender: document.getElementById(`pax_gender_${i}`).value,
+      }));
+
+      const email = document.getElementById('contactEmail').value.trim();
+      const phone = document.getElementById('contactPhone').value.trim();
+
+      if (passengerData.some(p => !p.name || !p.ic || !p.age)) {
+        alert('Please fill in all passenger details.');
+        return;
+      }
+      if (!email || !phone) {
+        alert('Please enter contact information.');
+        return;
+      }
+
+      const baseFare = bus.price * selectedSeats.length;
+      const tax = baseFare * 0.06;
+      const total = baseFare + tax;
+
+      sessionStorage.setItem('bookingData', JSON.stringify({ bus, search, selectedSeats, passengerData, email, phone, total }));
+      document.getElementById('modalTotal').innerHTML = `Total Amount: <strong>RM ${total.toFixed(2)}</strong>`;
+      document.getElementById('paymentModal').style.display = 'flex';
+    });
+
+    // Card number formatting
+    document.getElementById('cardNum').addEventListener('input', function () {
+      this.value = this.value.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim();
+    });
+    document.getElementById('cardExpiry').addEventListener('input', function () {
+      this.value = this.value.replace(/\D/g, '').replace(/^(\d{2})(\d)/, '$1/$2');
+    });
+
+    document.getElementById('payBtn').addEventListener('click', () => {
+      const method = document.querySelector('input[name="payment"]:checked').value;
+      if (method === 'card') {
+        const num = document.getElementById('cardNum').value.replace(/\s/g, '');
+        const exp = document.getElementById('cardExpiry').value;
+        const cvv = document.getElementById('cardCvv').value;
+        const name = document.getElementById('cardName').value.trim();
+        if (num.length < 16 || !exp || cvv.length < 3 || !name) {
+          alert('Please fill in valid card details.');
+          return;
+        }
+      }
+
+      // Simulate payment processing
+      document.getElementById('payBtn').textContent = 'Processing...';
+      document.getElementById('payBtn').disabled = true;
+      setTimeout(() => {
+        // Save booking to localStorage
+        const bookingData = JSON.parse(sessionStorage.getItem('bookingData'));
+        const bookingRef = 'BG' + Date.now().toString(36).toUpperCase();
+        bookingData.ref = bookingRef;
+        bookingData.status = 'Confirmed';
+        bookingData.bookedAt = new Date().toISOString();
+
+        const allBookings = JSON.parse(localStorage.getItem('busgoBookings') || '[]');
+        allBookings.push(bookingData);
+        localStorage.setItem('busgoBookings', JSON.stringify(allBookings));
+        sessionStorage.setItem('lastBooking', JSON.stringify(bookingData));
+
+        window.location.href = 'confirmation.html';
+      }, 2000);
+    });
+
+    function closeModal() {
+      document.getElementById('paymentModal').style.display = 'none';
+    }
+
+    // Payment method toggle
+    document.querySelectorAll('input[name="payment"]').forEach(el => {
+      el.addEventListener('change', () => {
+        document.getElementById('cardFields').style.display = el.value === 'card' ? 'block' : 'none';
+      });
+    });
+
+    function formatDate(d) {
+      if (!d) return '';
+      const dt = new Date(d + 'T00:00:00');
+      return dt.toLocaleDateString('en-MY', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    }
+  </script>
+</body>
+</html>
